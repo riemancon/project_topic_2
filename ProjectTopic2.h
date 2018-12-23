@@ -1,6 +1,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <vector>
 
 const int LETTERS_IN_ALPHABET = 27;
 const int MAX_PLAYER_LETTERS = 5;
@@ -8,7 +9,8 @@ const int MAX_PLAYER_LETTERS = 5;
 class ScrabbleWords
 {
 public:
-    ScrabbleWords(const std::string& filename);
+    ScrabbleWords(std::string filename = "");
+    ScrabbleWords(const std::vector<std::string>& filenames);
 
     bool isValidWord(const std::string& candidate);
 
@@ -18,10 +20,12 @@ private:
 
     std::set<std::string> words;
 
-    int values[LETTERS_IN_ALPHABET];
-    int distro[LETTERS_IN_ALPHABET];
+    static std::vector<int> values;
+    static std::vector<int> distro;
 
     int letterValue(char letter);
+
+    int loadWords(const std::string& filename);
 };
 
 class Player
