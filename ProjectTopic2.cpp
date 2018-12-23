@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
+#include <cstring>
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -18,6 +20,8 @@ int main(int /* argc */, char** /* argv */)
     std::vector<std::string> files{"scrabble_words_two_three_letters.txt",
                                    "scrabble_words_four_letters.txt",
                                    "scrabble_words_five_letters.txt"};
+
+    // prepend the path
     std::for_each(files.begin(),
                   files.end(),
                   [=](std::string &f)
@@ -28,11 +32,73 @@ int main(int /* argc */, char** /* argv */)
 
     ScrabbleWords scrabbleWords(files);
 
-    std::string word("junk1");
-    std::cout << "word value of " << word << " " << scrabbleWords.wordValue(word) << std::endl;
+    std::vector<Player> players{Player("player1"), Player("player2")};
+    int selector = 0;
+    while (1)
+    {
+        bool validOption = true;
 
-    Player player1;
-    Player player2;
+        std::string tempword;
+
+        promptForWord(players[selector].getName(), tempword);
+
+        if (tempword.size() >= 2 && tempword.size() <= 5)
+        {
+            int value = scrabbleWords.wordValue(tempword);
+            if (value)
+            {
+                std::cout << "word value of " << tempword << " " << value << std::endl;
+            }
+            else
+            {
+                std::cout << "'" << tempword << "' is not a word" << std::endl;
+            }
+
+            players[selector].addScore(value);
+
+            // switch player
+            selector ^= 1;
+        }
+        else
+        {
+            if (tempword.size() == 1)
+            {
+                switch (tolower(tempword.at(0)))
+                {
+                case 'h':
+                    std::cout << "help" << std::endl;
+                    break;
+                case 'p':
+                    std::cout << "pass" << std::endl;
+                    selector ^= 1;
+                    break;
+                case 'x':
+                    std::cout << std::endl << "Game over" << std::endl;
+                    for (auto& p : players)
+                    {
+                        p.print();
+                    }
+                    exit(0);    
+                    break;
+                case 's':
+                    for (auto& p : players)
+                    {
+                        p.print();
+                    }
+                    break;
+                default:
+                    std::cout << "unknown option" << std::endl;
+                    validOption = false;
+                break;
+                }
+            }
+
+            if (!validOption)
+            {
+                std::cout << "word size must be between 2 and 5 letters, try again" << std::endl;
+            }
+        }
+    }
 }
 
 ScrabbleWords::ScrabbleWords(std::string filename)
@@ -106,6 +172,7 @@ int ScrabbleWords::loadWords(const std::string& filename)
         }
 
         //std::cout << "Adding line " << lineno << " -> " << line << std::endl;
+        std::transform(line.begin(), line.end(), line.begin(), tolower);
         words.insert(line);
 
         ++count;
@@ -114,11 +181,31 @@ int ScrabbleWords::loadWords(const std::string& filename)
     return count;
 }
 
-Player::Player() :
-    score(0)
+Player::Player(const std::string& _name) :
+    score(0),
+    name(_name)
 {
 }
 
 void Player::addLetters(int numToAdd)
 {
+}
+
+void Player::addScore(int value)
+{
+    score += value;
+}
+
+void Player::print()
+{
+    std::cout << "Player " << name << " score " << score << std::endl;
+}
+
+void promptForWord(const std::string& name, std::string& tempword)
+{
+    std::cout << "Player " << name << ", enter a word, 2-5 letters.  'H' for help, 'P' to pass turn, 'X' to exit: ";
+
+    getline(std::cin, tempword);
+
+    std::transform(tempword.begin(), tempword.end(), tempword.begin(), tolower);
 }
